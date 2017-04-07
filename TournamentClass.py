@@ -34,6 +34,7 @@ Thanks to Andrew Nestico
 def get_tournament_slug_from_smashgg_urls(url):
     return(url.split("/")[4])
 
+
 def get_tournament_info(slug):
     tournament_url = "https://api.smash.gg/tournament/" + slug
     t = requests.get(tournament_url, verify='cacert.pem')
@@ -42,7 +43,10 @@ def get_tournament_info(slug):
     timezone = tournament_data["entities"]["tournament"]["timezone"]
 
     # Scrape event page in case event ends earlier than tournament
-    event_url = "https://api.smash.gg/tournament/" + slug + "/event/" + "melee-singles"
+    if slug == 'the-road-to-genesis':
+        event_url = "https://api.smash.gg/tournament/" + slug + "/event/" + "mikehaze-sub"
+    else:
+        event_url = "https://api.smash.gg/tournament/" + slug + "/event/" + "melee-singles"
     e = requests.get(event_url, verify='cacert.pem')
     event_data = e.json()
     event_id = event_data["entities"]["event"]["id"]
@@ -65,7 +69,10 @@ def get_tournament_info(slug):
     
 def create_smashgg_api_urls(slug):
     """from master url creates list of api urls for pools and bracket"""
-    url = 'http://api.smash.gg/tournament/' + slug + '/event/melee-singles?expand[0]=groups&expand[1]=phase'
+    if slug == 'the-road-to-genesis':
+        url = 'http://api.smash.gg/tournament/' + slug + '/event/mikehaze-sub?expand[0]=groups&expand[1]=phase'
+    else:
+        url = 'http://api.smash.gg/tournament/' + slug + '/event/melee-singles?expand[0]=groups&expand[1]=phase'
     data = requests.get(url,verify='cacert.pem').json()
     groups = data["entities"]["groups"]
     urlList = []
@@ -106,24 +113,26 @@ def write_txt_from_smashgg(slug):
     urlList = create_smashgg_api_urls(slug)
     strTuple = ''
     for url in urlList:
-        data = requests.get(url,verify='cacert.pem').json()
-        entrants = data["entities"]["entrants"]
-        entrant_dict = {}
-        for entrant in entrants:
-            entrant_dict[entrant["id"]] = entrant["name"]
-        sets = data["entities"]["sets"]
-        set_data = ""
-        grand_finals = ""
-        for set in sets:
-            parsed_set = parse_smashgg_set(set, entrant_dict)
-            if parsed_set:
-                if set["isGF"]:
-                    grand_finals += parsed_set + "\n"
-                else:
-                    set_data += parsed_set + "\n"
-        parsed_matches = set_data + grand_finals
-        strTuple += parsed_matches
-
+        try:
+            data = requests.get(url,verify='cacert.pem').json()
+            entrants = data["entities"]["entrants"]
+            entrant_dict = {}
+            for entrant in entrants:
+                entrant_dict[entrant["id"]] = entrant["name"]
+            sets = data["entities"]["sets"]
+            set_data = ""
+            grand_finals = ""
+            for set in sets:
+                parsed_set = parse_smashgg_set(set, entrant_dict)
+                if parsed_set:
+                    if set["isGF"]:
+                        grand_finals += parsed_set + "\n"
+                    else:
+                        set_data += parsed_set + "\n"
+            parsed_matches = set_data + grand_finals
+            strTuple += parsed_matches
+        except:
+            continue
     return(strTuple)
 
 def setTuple(strTuple):
@@ -255,22 +264,16 @@ class MasterTournament:
         return(sorted(tournaments))
         
     def getPlayerWins(self,player):
-        winsRaw = []
+        winsRaw = [] #List of players Player beat
         winsNormalized = []
-        winChecked = []
+        winChecked = []#List of players checked
         for tournament in self.tournamentList:
             winsRaw += tournament.getPlayerWins(player)
         for playerWinAgainst in winsRaw:
             if playerWinAgainst not in winChecked:
                 winChecked.append(playerWinAgainst)
-                count = 0
-                for tournament in self.tournamentList:
-                    if playerWinAgainst in tournament.getPlayerWins(player):
-                        count += 1
-                if count == 1:
-                    winsNormalized.append(playerWinAgainst)
-                if count > 1:
-                    winsNormalized.append(playerWinAgainst + ' x{}'.format(count))
+                count = winsRaw.count(playerWinAgainst)
+                winsNormalized.append(playerWinAgainst + ' x{}'.format(count))
         return(sorted(winsNormalized,key=lambda x:(len,x[0]),reverse=False))
 
     def getPlayerLoss(self,player):
@@ -282,14 +285,8 @@ class MasterTournament:
         for playerLossAgainst in lossRaw:
             if playerLossAgainst not in lossChecked:
                 lossChecked.append(playerLossAgainst)
-                count = 0
-                for tournament in self.tournamentList:
-                    if playerLossAgainst in tournament.getPlayerLoss(player):
-                        count += 1
-                if count == 1:
-                    lossNormalized.append(playerLossAgainst)
-                if count > 1:
-                    lossNormalized.append(playerLossAgainst + ' x{}'.format(count))
+                count = lossRaw.count(playerLossAgainst)
+                lossNormalized.append(playerLossAgainst + ' x{}'.format(count))
         return(sorted(lossNormalized,key=lambda x:(len,x[0]),reverse=False))
 
     def getPlayerWinsLossDict(self,player):
@@ -305,10 +302,7 @@ class MasterTournament:
         for playerWinAgainst in winsRaw:
             if playerWinAgainst not in winChecked:
                 winChecked.append(playerWinAgainst)
-                count = 0
-                for tournament in self.tournamentList:
-                    if playerWinAgainst in tournament.getPlayerWins(player):
-                        count += 1
+                count = winsRaw.count(playerWinAgainst)
                 if playerWinAgainst not in D:
                     D[playerWinAgainst] = [0,0]
                 D[playerWinAgainst][0] += count
@@ -316,10 +310,7 @@ class MasterTournament:
         for playerLossAgainst in lossRaw:
             if playerLossAgainst not in lossChecked:
                 lossChecked.append(playerLossAgainst)
-                count = 0
-                for tournament in self.tournamentList:
-                    if playerLossAgainst in tournament.getPlayerLoss(player):
-                        count += 1
+                count = lossRaw.count(playerLossAgainst)
                 if playerLossAgainst not in D:
                     D[playerLossAgainst] = [0,0]
                 D[playerLossAgainst][1] += count

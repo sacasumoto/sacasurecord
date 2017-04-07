@@ -428,8 +428,8 @@ class PageOne(tk.Frame,Main):
         E1.bind('<Return>', lambda command: B1.invoke())
 
 def displayTrueSkillList(container,masterTournament,mu,minmatches):
-    a = masterTournament.tournamentList
-    msg = TSS.createRankingSTR(a,mu,minmatches)
+    L = masterTournament.tournamentList
+    msg = TSS.createRankingSTR(L,mu,minmatches)
     popupmsg4("True Skill Rankings",msg)
 
 class PageTwo(tk.Frame,Main):
@@ -500,9 +500,10 @@ def historyPlot(masterTournament,player):
         toolbar = NavigationToolbar2TkAgg(canvas,popup)
         toolbar.update()
         canvas._tkcanvas.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
-    except Exception as e:
-        popupmsg('Error,try again')
-        print(e)
+    except Exception:
+##        popupmsg('Error,try again')
+        popupmsg5("!",str(traceback.format_exc()),150)
+
         
 
 class PageThree(tk.Frame,Main):
