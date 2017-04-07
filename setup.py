@@ -3,7 +3,7 @@ import sys
 import matplotlib
 import requests.certs
 import pytz
-
+## Currently True Skill Plots aren't working on the build.
 base = None
 if sys.platform == 'win32':
     base = "Win32GUI"
@@ -26,11 +26,7 @@ cx_Freeze.setup(
                                         "numpy",
                                         "scipy",
                                         "pytz",
-                                        "datetime",
-                                        "trueskill",
-                                        "operator",
-                                        "math",
-                                        "urllib3"],
+                                        "datetime"],
                             "include_files":["LoadIn.txt",
                                              "TournamentClass.py",
                                              "ngcc.ico",
@@ -45,9 +41,7 @@ cx_Freeze.setup(
                                              'hmc_urllib.py',
                                              'MeleeResults/',
                                              'MeleeUrls/',
-                                             (requests.certs.where(),'cacert.pem'),
                                              requests.certs.where(),
-                                             'cacert.pem',
                                              (pytz.__path__[0])]}},
     version = "0.04",
     description = "Smash.gg tournament sets extractor",
