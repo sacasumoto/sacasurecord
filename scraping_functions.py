@@ -122,10 +122,13 @@ def normalize_name(name):
     name = name.title()
 
     # Remove pools
+    
     #name = remove_pools(name)
     """ removing this option for now, creates 0 len string names"""
+    """ enable if using BNC """
+
     """added this to remove emojis lul"""
-    name = remove_symbols(name)
+##    name = remove_symbols(name)
     
     # Remove usual sponsors
     name = name.split("|")[-1].strip()
