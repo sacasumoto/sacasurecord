@@ -40,7 +40,11 @@ def get_tournament_info(slug):
     t = requests.get(tournament_url, verify='cacert.pem')
     tournament_data = t.json()
     tournament_name = tournament_data["entities"]["tournament"]["name"]
+    
     timezone = tournament_data["entities"]["tournament"]["timezone"]
+    if timezone != True:
+        timezone = 'America/Los_Angeles'
+        
 
     # Scrape event page in case event ends earlier than tournament
     if slug == 'the-road-to-genesis':
@@ -54,7 +58,6 @@ def get_tournament_info(slug):
     timestamp = event_data["entities"]["event"]["endAt"]
     if not timestamp:
         timestamp = tournament_data["entities"]["tournament"]["endAt"]
-
     # Get local date
     date = datetime.fromtimestamp(timestamp, pytz.timezone(timezone)).date()
     date = str(date)
@@ -335,16 +338,18 @@ class MasterTournament:
         file.close()
 
     def loadFromFile(self,filename,encoding='utf-8'):
-        file = open(filename,'r')
+        file = open(filename,'r',encoding='utf-8')
         L = file.readlines()
         for tournamentDict in L:
             self.addTournament('Loading',**eval(tournamentDict))
         return(self.tournamentsAdded())
 
     def addFromUrlFile(self,filename,encoding='utf-8'):
-        file = open(filename,'r')
+        file = open(filename,'r',encoding='utf-8')
+        
         L = file.readlines()
         for url in L:
+            print(url)
             self.addTournament(url)
         return(self.tournamentsAdded())
         
@@ -352,5 +357,6 @@ class MasterTournament:
         self.tournamentList = []
 
     
+FNT = MasterTournament([])
 
           
