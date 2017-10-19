@@ -171,6 +171,18 @@ def saveFileHandler(masterTournament,container):
         except IOError as e:
             popupmsg('Error')
 
+def openURLFileHandler(masterTournament,container):
+    file = filedialog.askopenfile(parent=container,
+                                     mode='rb',initialdir='.',title='Choose a file')
+    if file != None:
+        try:
+            filename = file.name
+            file.close()
+            masterTournament.addFromUrlFile(filename)
+            popupmsg('File loaded!')
+        except:
+            popupmsg('No file chosen')
+
 
 def Quit(root):
     os._exit(1)
@@ -190,6 +202,8 @@ class Main(tk.Tk):
         filemenu = tk.Menu(menubar,tearoff=0)
         filemenu.add_command(label="Save File",command= lambda: saveFileHandler(Main.master,container))
         filemenu.add_command(label="Load File",command= lambda: openFileHandler(Main.master,container))
+        filemenu.add_separator()
+        filemenu.add_command(label="Load URL File",command= lambda: openURLFileHandler(Main.master,container))
         filemenu.add_separator()
 
         
@@ -316,7 +330,8 @@ def playerWinsLoss(container,playerVar,masterTournament):
         W += w
         L1 += l        
     Wpct = float((W/(W+L1))*100)
-    title = "{:<42}\t\tWin%: {:<2.2f}\n".format(playerVar+"'s Record\t",Wpct)
+    N = A.getPlayerActivityTournaments(playerVar)
+    title = "{:<42}\t\tActivityTournaments: {}\n".format(playerVar+"'s Record\t",N)
     subtitle = '{:<30}\t{:<12}\t{}\n'.format('Opponents:','Record:','Tournaments Entered:')
 
     final += title
@@ -331,55 +346,83 @@ def playerWinsLoss(container,playerVar,masterTournament):
         except:
             final += '{:<30}\t{}-{:<10}\t{}\n'.format(name,w,l,'')
         i += 1
+    final += "\n\n\n\n\n\n"
+
+    for tournament in A.tournamentList:
+        if playerVar in tournament.getEntrantList():
+            L = tournament.getPlayerLoss(playerVar)
+            W = tournament.getPlayerWins(playerVar)
+            
+            final += '{}\n'.format(tournament.getTournamentName())
+            
+            final += 'Wins:\n'
+            for i in W:
+                final += '{}\n'.format(i)
+            final += '\n'
+            final += "Loss:\n"
+            for i in L:
+                final += '{}\n'.format(i)
+            final += '\n\n'
+        
+            
+    
+
+
+
+    
 
 
 
 
     popupmsg5(playerVar+"'s Record",final,150)
 
-def playerWinsLossList(container,playerList,masterTournament):
-    playerList = playerList.split(',')
-    final2 = ''
-    for playerVar in playerList:
-        print(playerVar)
-        A = masterTournament
-        D = A.getPlayerWinsLossDict(playerVar)
-        T = A.getPlayerTournaments(playerVar)
-        L = sorted(D,key=lambda x:(len,x[0]),reverse=False)
-
-        title = '{:<30}\t{:<2.2f}'
-
-        final = ''
-
-
-        W = 0
-        L1 = 0
-        for w,l in D.values():
-            W += w
-            L1 += l        
-        Wpct = float((W/(W+L1))*100)
-        title = "{:<42}\t\tWin%: {:<2.2f}\n".format(playerVar+"'s Record\t",Wpct)
-        subtitle = '{:<30}\t{:<12}\t{}\n'.format('Opponents:','Record:','Tournaments Entered:')
-
-        final += title
-        final += subtitle
-
-        
-        i=0
-        for name in L:
-            w,l = D[name]
-            try:
-                final += '{:<30}\t{}-{:<10}\t{}\n'.format(name,w,l,T[i])
-            except:
-                final += '{:<30}\t{}-{:<10}\t{}\n'.format(name,w,l,'')
-            i += 1
-        final2 += final + '\n\n\n'
-    popupmsg5('Player List Record',final2,150)
+##def playerWinsLossList(container,playerList,masterTournament):
+##    playerList = playerList.split(',')
+##    final2 = ''
+##    for playerVar in playerList:
+##        print(playerVar)
+##        A = masterTournament
+##        D = A.getPlayerWinsLossDict(playerVar)
+##        T = A.getPlayerTournaments(playerVar)
+##        L = sorted(D,key=lambda x:(len,x[0]),reverse=False)
+##
+##        title = '{:<30}\t{:<2.2f}'
+##
+##        final = ''
+##
+##
+##        W = 0
+##        L1 = 0
+##        for w,l in D.values():
+##            W += w
+##            L1 += l        
+##        Wpct = float((W/(W+L1))*100)
+##        title = "{:<42}\t\tWin%: {:<2.2f}\n".format(playerVar+"'s Record\t",Wpct)
+##        subtitle = '{:<30}\t{:<12}\t{}\n'.format('Opponents:','Record:','Tournaments Entered:')
+##
+##        final += title
+##        final += subtitle
+##
+##        
+##        i=0
+##        for name in L:
+##            w,l = D[name]
+##            try:
+##                final += '{:<30}\t{}-{:<10}\t{}\n'.format(name,w,l,T[i])
+##            except:
+##                final += '{:<30}\t{}-{:<10}\t{}\n'.format(name,w,l,'')
+##            i += 1
+##        final2 += final + '\n\n\n'
+##
+##        
+##    popupmsg5('Player List Record',final2,150)
         
 
 def displayEntrantList(container,masterTournament,playerName):
     List = masterTournament.getEntrantList()
     popupmsg3("Entrant List",List,playerName)
+
+
 
 
 class PageOne(tk.Frame,Main):
@@ -407,7 +450,7 @@ class PageOne(tk.Frame,Main):
 ##                        command=lambda: playerWinsLossList(self,self.playerNameList.get(),Main.master))
 ##        B2.grid(row=5,column=1)
 ##        
-
+        
 
         button1 = ttk.Button(self,text="Tournaments Menu>>",
                             command=lambda: controller.show_frame(StartPage))
