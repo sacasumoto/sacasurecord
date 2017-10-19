@@ -47,8 +47,11 @@ def get_tournament_info(slug):
         
 
     # Scrape event page in case event ends earlier than tournament
-    if slug == 'the-road-to-genesis':
-        event_url = "https://api.smash.gg/tournament/" + slug + "/event/" + "mikehaze-sub"
+##    if slug == 'the-road-to-genesis':
+    if 'weds-night-fights' in slug:
+        event_url = "https://api.smash.gg/tournament/" + slug + "/event/" + "smash-melee"
+    elif 'training-mode-tuesdays-13' == slug:
+        event_url = "https://api.smash.gg/tournament/" + slug + "/event/" + "tmt-top-8"
     else:
         event_url = "https://api.smash.gg/tournament/" + slug + "/event/" + "melee-singles"
     e = requests.get(event_url, verify='cacert.pem')
@@ -63,17 +66,25 @@ def get_tournament_info(slug):
     date = str(date)
 
     ## Get standings
-    standing_string = "/standings?expand[]=attendee&per_page=100"
-    standing_url = event_url + standing_string
-    s = requests.get(standing_url,verify='cacert.pem')
-    s_data = s.json()
-    count = s_data["total_count"]
+    if 'training-mode-tuesdays' in slug:
+        attendee_url = 'https://api.smash.gg/tournament/'+slug+'/attendees?filter=%7B"eventIds"%3A'+str(event_id)+'%7D'
+        a_data = requests.get(attendee_url, verify='cacert.pem').json()
+        count = a_data["total_count"]
+    else:
+        standing_string = "/standings?expand[]=attendee&per_page=100"
+        standing_url = event_url + standing_string
+        s = requests.get(standing_url,verify='cacert.pem')
+        s_data = s.json()
+        count = s_data["total_count"]
     return([tournament_name,event_id,count,str(date)])
     
 def create_smashgg_api_urls(slug):
     """from master url creates list of api urls for pools and bracket"""
-    if slug == 'the-road-to-genesis':
-        url = 'http://api.smash.gg/tournament/' + slug + '/event/mikehaze-sub?expand[0]=groups&expand[1]=phase'
+##    if 'training-mode-tuesdays' not in slug:
+    if 'weds-night-fights' in slug:
+        url = "https://api.smash.gg/tournament/" + slug + "/event/smash-melee?expand[0]=groups&expand[1]=phase"
+    elif 'training-mode-tuesdays-13' == slug:
+        url = "https://api.smash.gg/tournament/" + slug + "/event/tmt-top-8?expand[0]=groups&expand[1]=phase"
     else:
         url = 'http://api.smash.gg/tournament/' + slug + '/event/melee-singles?expand[0]=groups&expand[1]=phase'
     data = requests.get(url,verify='cacert.pem').json()
@@ -82,6 +93,27 @@ def create_smashgg_api_urls(slug):
     for i in range(len(groups)):
         iD = str(groups[i]["id"])
         urlList.append("http://api.smash.gg/phase_group/" + iD + "?expand[0]=sets&expand[1]=entrants")
+
+##    else:
+##        url1 = "https://api.smash.gg/tournament/" + slug + "/event/melee-singles?expand[0]=groups&expand[1]=phase"
+##        data = requests.get(url1,verify='cacert.pem').json()
+##        groups = data["entities"]["groups"]
+##        urlList = []
+##        for i in range(len(groups)):
+##            iD = str(groups[i]["id"])
+##            urlList.append("http://api.smash.gg/phase_group/" + iD + "?expand[0]=sets&expand[1]=entrants")
+####        try:
+####            url2 = "https://api.smash.gg/tournament/" + slug + "/event/ladder?expand[0]=groups&expand[1]=phase"
+####            data = requests.get(url2,verify='cacert.pem').json()
+####            groups = data["entities"]["groups"]
+##            urlList = []
+##            for i in range(len(groups)):
+##                iD = str(groups[i]["id"])
+##                urlList.append("http://api.smash.gg/phase_group/" + iD + "?expand[0]=sets&expand[1]=entrants")
+##                print('worked')
+##        except Exception as a:
+##            print(a)
+##            print('doesn"t work')
     return(urlList)
 
 def parse_smashgg_set(set,entrant_dict):
@@ -265,7 +297,44 @@ class MasterTournament:
             if player in tournament.getEntrantList():
                 tournaments.append(tournament.getTournamentName())
         return(sorted(tournaments))
-        
+
+#Player Activity Code
+    def getPlayerActivityTournaments(self,player):
+        tournaments = []
+        for tournament in self.tournamentList:
+            if player in tournament.getEntrantList() and tournament.getTournamentEntrantcount() > 60:
+                tournaments.append(tournament.getTournamentName())
+        return(len(tournaments))
+
+    def getActivityTournaments(self):
+        tournaments = []
+        for tournament in self.tournamentList:
+            if tournament.getTournamentEntrantcount() > 60:
+                tournaments.append((tournament.getTournamentEntrantcount(),tournament.getTournamentName()))
+        return(sorted(tournaments))
+    def getAllPlayersActivity(self):
+        D = {}
+        players = []
+        activitytournaments = []
+        for tournament in self.tournamentList:
+            if tournament.getTournamentEntrantcount() > 60:
+                for player in tournament.getEntrantList():
+                    if player not in D:
+                        D[player] = [1,tournament.getTournamentName()]
+                    else:
+                        D[player][0] += 1
+                        D[player][1] += ' '+tournament.getTournamentName()
+        return(D)
+                
+    def getActivePlayers(self):
+        D1 = {}
+        D2 = self.getAllPlayersActivity()
+        for key in D2:
+            if D2[key][0] > 3:
+                D1[key] = [D2[key][0],D2[key][1]]
+        return(D1)
+            
+                
     def getPlayerWins(self,player):
         winsRaw = [] #List of players Player beat
         winsNormalized = []
@@ -351,12 +420,10 @@ class MasterTournament:
         for url in L:
             print(url)
             self.addTournament(url)
+            print('OK')
+        print('Done')
         return(self.tournamentsAdded())
         
     def clearAll(self):
         self.tournamentList = []
 
-    
-FNT = MasterTournament([])
-
-          
