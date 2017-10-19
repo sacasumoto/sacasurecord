@@ -1,4 +1,4 @@
-# SacaSuRecord ver 0.04
+# SacaSuRecord ver 0.05
 ## Description
 * Smash.gg parser 
 * TournamentClass.py is the bulk of the code
