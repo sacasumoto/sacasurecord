@@ -1,6 +1,7 @@
-# SacaSuRecord ver 0.05
+# SacaSuRecord ver 0.06
 ## Description
 * Smash.gg parser 
+* Challonge parser
 * TournamentClass.py is the bulk of the code
 * Sacasurecord.py creates the GUI.
 * LoadIn.txt is an example of loadable data, automatically loaded by default.
