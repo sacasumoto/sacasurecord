@@ -43,7 +43,7 @@ cx_Freeze.setup(
                                              'MeleeUrls/',
                                              requests.certs.where(),
                                              (pytz.__path__[0])]}},
-    version = "0.04",
+    version = "0.06",
     description = "Smash.gg tournament sets extractor",
     executables = executables
     )

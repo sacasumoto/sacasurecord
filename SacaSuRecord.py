@@ -24,6 +24,7 @@ Sponsors are taken out and every new word is capitalized.\n
 Currently only smashgg tournaments can be added.\n
 This is done by by linking a smash.gg url \n
 For example: 'https://smash.gg/tournament/super-smash-sundays-41/brackets/11439/7448/30092'\n
+You can also challonge brackets.
 '''
 Thankstxt = "Special thanks to Andrew 'PracticalTAS' Nestico' for his code, without it this wouldn't be possible.\nThank you to Sentdex for his tutorials. www.sentdex.com"
 
@@ -246,7 +247,7 @@ def addTourney(url,masterTournament):
         masterTournament.addTournament(url)
         popupmsg('Tournament Added')
     except Exception:
-        popupmsg('Error, use smash.gg url \n or lul tournament can not be added')
+        popupmsg('Error, use smash.gg url, challonge.com url \n or lul tournament can not be added')
 ##        popupmsg5("!",str(traceback.format_exc()),150)
         raise
 
@@ -257,12 +258,12 @@ def addedTourneys(container,masterTournament):
     for tournament in masterTournament.tournamentList:
         L.append((tournament.date,tournament))
     L.sort(key=lambda tup: tup[0])
-    fermat = '{:<10}\t{:<15}\t{:<60}\t{:<10}\t{:70}\n'
-    title = fermat.format('ID:','Date:','Slug:','Entrants:','Name:')
+    fermat = '{:<10}\t{:<15}\t{:<80}\t{:<10}\t{:<60}\n'
+    title = fermat.format('ID:','Date:','Name:','Entrants:','Slug:')
     final += title
     for tup in L:
-        final += fermat.format(tup[1].eventID,tup[1].date,tup[1].slug,tup[1].entrantcount,tup[1].name)
-    popupmsg5('Tournaments',final,180)
+        final += fermat.format(tup[1].eventID,tup[1].date,tup[1].name,tup[1].entrantcount,tup[1].slug.strip('\n'))
+    popupmsg5('Tournaments',final,190)
 
 
 class StartPage(tk.Frame,Main):
@@ -329,24 +330,30 @@ def playerWinsLoss(container,playerVar,masterTournament):
     for w,l in D.values():
         W += w
         L1 += l        
-    Wpct = float((W/(W+L1))*100)
+##    Wpct = float((W/(W+L1))*100)
     N = A.getPlayerActivityTournaments(playerVar)
+    
     title = "{:<42}\t\tActivityTournaments: {}\n".format(playerVar+"'s Record\t",N)
     subtitle = '{:<30}\t{:<12}\t{}\n'.format('Opponents:','Record:','Tournaments Entered:')
 
     final += title
     final += subtitle
 
-    
+    K = [x[1] for x in A.getActivityTournaments()]
     i=0
     for name in L:
         w,l = D[name]
         try:
-            final += '{:<30}\t{}-{:<10}\t{}\n'.format(name,w,l,T[i])
+            if T[i] in K:
+                final += '{:<30}\t{:>4}-{:<7}\t{}\n'.format(name,w,l,(T[i]+' *'))
+            else:
+                final += '{:<30}\t{:>4}-{:<7}\t{}\n'.format(name,w,l,T[i])
+
+            
         except:
-            final += '{:<30}\t{}-{:<10}\t{}\n'.format(name,w,l,'')
+            final += '{:<30}\t{:>4}-{:<7}\t{}\n'.format(name,w,l,'')
         i += 1
-    final += "\n\n\n\n\n\n"
+    final += "\n\n\n\n"
 
     for tournament in A.tournamentList:
         if playerVar in tournament.getEntrantList():
@@ -357,11 +364,11 @@ def playerWinsLoss(container,playerVar,masterTournament):
             
             final += 'Wins:\n'
             for i in W:
-                final += '{}\n'.format(i)
-            final += '\n'
+                final += '\t{}\n'.format(i)
+##            final += '\n'
             final += "Loss:\n"
             for i in L:
-                final += '{}\n'.format(i)
+                final += '\t{}\n'.format(i)
             final += '\n\n'
         
             

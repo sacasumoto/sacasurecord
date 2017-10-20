@@ -31,6 +31,10 @@ OTHER DEALINGS IN THE SOFTWARE.
 Thanks to Andrew Nestico
 
 """
+
+
+'''Smash.GG Code'''
+
 def get_tournament_slug_from_smashgg_urls(url):
     return(url.split("/")[4])
 
@@ -80,7 +84,7 @@ def get_tournament_info(slug):
     
 def create_smashgg_api_urls(slug):
     """from master url creates list of api urls for pools and bracket"""
-##    if 'training-mode-tuesdays' not in slug:
+
     if 'weds-night-fights' in slug:
         url = "https://api.smash.gg/tournament/" + slug + "/event/smash-melee?expand[0]=groups&expand[1]=phase"
     elif 'training-mode-tuesdays-13' == slug:
@@ -94,26 +98,14 @@ def create_smashgg_api_urls(slug):
         iD = str(groups[i]["id"])
         urlList.append("http://api.smash.gg/phase_group/" + iD + "?expand[0]=sets&expand[1]=entrants")
 
-##    else:
-##        url1 = "https://api.smash.gg/tournament/" + slug + "/event/melee-singles?expand[0]=groups&expand[1]=phase"
-##        data = requests.get(url1,verify='cacert.pem').json()
-##        groups = data["entities"]["groups"]
-##        urlList = []
-##        for i in range(len(groups)):
-##            iD = str(groups[i]["id"])
-##            urlList.append("http://api.smash.gg/phase_group/" + iD + "?expand[0]=sets&expand[1]=entrants")
-####        try:
-####            url2 = "https://api.smash.gg/tournament/" + slug + "/event/ladder?expand[0]=groups&expand[1]=phase"
-####            data = requests.get(url2,verify='cacert.pem').json()
-####            groups = data["entities"]["groups"]
-##            urlList = []
-##            for i in range(len(groups)):
-##                iD = str(groups[i]["id"])
-##                urlList.append("http://api.smash.gg/phase_group/" + iD + "?expand[0]=sets&expand[1]=entrants")
-##                print('worked')
-##        except Exception as a:
-##            print(a)
-##            print('doesn"t work')
+    if 'red-bull-smash-gods-and-gatekeepers-2' in slug:
+        url = "https://api.smash.gg/tournament/" + slug + "/event/forsaken-bracket?expand[0]=groups&expand[1]=phase"
+        data = requests.get(url,verify='cacert.pem').json()
+        groups = data["entities"]["groups"]
+        for i in range(len(groups)):
+            iD = str(groups[i]["id"])
+            urlList.append("http://api.smash.gg/phase_group/" + iD + "?expand[0]=sets&expand[1]=entrants")
+
     return(urlList)
 
 def parse_smashgg_set(set,entrant_dict):
@@ -202,6 +194,81 @@ def entrantList(setTuple):
             EntrantList.append(p2)
     return(EntrantList)
 
+
+'''
+
+Challonge
+
+'''
+
+
+def getTournamentSlug(url):
+    L = url.split('/')
+    p1 = L[2]
+    p2 = L[3]
+    if p1 == 'challonge.com':
+        slug = p2
+    else:
+        p1 = p1.split('.')[0]
+        slug = p1+'-'+p2
+    return(slug)
+
+def getTournamentInfo(slug,key):
+    base_url = 'https://api.challonge.com/v1/tournaments/'
+    url = base_url+slug+'.json?api_key='+key
+    data = requests.get(url,verify='cacert.pem').json()
+    Name = data['tournament']['name']
+    ID = data['tournament']['id']
+    EntrantCount = data['tournament']['participants_count']
+    Date = data['tournament']['started_at'][:10]
+
+    return([Name,ID,EntrantCount,Date])
+
+def getParticipantIDs(slug,key):
+    base_url = 'https://api.challonge.com/v1/tournaments/'
+    url = base_url+slug+'/participants.json?api_key='+key
+    data = requests.get(url,verify='cacert.pem').json()
+    D = {}
+    for entrant in data:
+        name = entrant['participant']['name']
+        entrant_id = entrant['participant']['id']
+        D[entrant_id] = name
+    return(D)
+    
+
+def getTournamentSets(slug,key):
+    base_url = 'https://api.challonge.com/v1/tournaments/'
+    url = base_url+slug+'/matches.json?api_key='+key
+    data = requests.get(url, verify='cacert.pem').json()
+    nameIDDict = getParticipantIDs(slug,key)
+    setTuple = []
+    for match in data:
+        p1ID = match["match"]["winner_id"]
+        p2ID = match["match"]["loser_id"]
+        p1 = sf.normalize_name(nameIDDict[p1ID])
+        p2 = sf.normalize_name(nameIDDict[p2ID])
+        setTuple.append([p1,p2])
+    return(setTuple)
+
+def challongeURL(url):
+    slug = getTournamentSlug(url)
+    key = '0CXUzpJLmzMWV0Kqz18dQoIVioR2BKgQNTXgOjnJ'
+    L = getTournamentInfo(slug,key)
+    Name = L[0]
+    ID = L[1]
+    EntrantCount = L[2]
+    Date = L[3]
+    Data = getTournamentSets(slug,key)
+    return({'Name':Name,'ID':ID,'Slug':slug,'Entrants':EntrantCount,'Date':Date,'Data':Data})
+
+
+
+'''
+
+Tournament Code
+
+'''
+
 class Tournament:
     def __init__(self, url,**kwargs):
         if url == "Loading":
@@ -212,6 +279,15 @@ class Tournament:
             self.date = kwargs['Date']
             self.sets = kwargs['Data']
             self.raw = kwargs
+        elif "challonge.com" in url:
+            D = challongeURL(url)
+            self.name = D['Name']
+            self.eventID = D['ID']
+            self.slug = D['Slug']
+            self.entrantcount = D['Entrants']
+            self.date = D['Date']
+            self.sets = D['Data']
+            self.raw = D    
         else:
             self.slug = get_tournament_slug_from_smashgg_urls(url)
             self.info = get_tournament_info(self.slug)
@@ -240,6 +316,15 @@ class Tournament:
         return(self.slug)
     def getSetTuple(self):
         return(self.sets)
+
+
+'''
+
+MasterTournament Code Beings
+
+'''
+
+
 
 class MasterTournament:
     def __init__(self,tournamentList):
@@ -312,6 +397,7 @@ class MasterTournament:
             if tournament.getTournamentEntrantcount() > 60:
                 tournaments.append((tournament.getTournamentEntrantcount(),tournament.getTournamentName()))
         return(sorted(tournaments))
+        
     def getAllPlayersActivity(self):
         D = {}
         players = []
@@ -418,12 +504,20 @@ class MasterTournament:
         
         L = file.readlines()
         for url in L:
-            print(url)
-            self.addTournament(url)
+            print(url.strip('\n'))
+            self.addTournament(url.strip('\n'))
             print('OK')
         print('Done')
         return(self.tournamentsAdded())
-        
+
+    def normalizeNamesAgain(self):
+        for tournament in self.tournamentList:
+            newsetTuple =[]
+            for p1,p2 in tournament.sets:
+                newsetTuple.append([sf.normalize_name(p1),sf.normalize_name(p2)])
+            tournament.setTuple = newsetTuple
+            tournament.raw['Data'] = newsetTuple
+        print('Done')
     def clearAll(self):
         self.tournamentList = []
 

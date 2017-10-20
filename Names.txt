@@ -3,6 +3,7 @@
 Akbiggs: Ak bigs
 Alex19: Alex 19,notalex19,Notalex19
 Anto: Ssbm-T Anto
+Americandragon_Davidchong: American Dragon Dchong, Americandragondavidchong
 Arc: ARC
 Armada: Rmada, P4K EMP Armada
 A Rookie: A_Rookie
@@ -10,8 +11,10 @@ Axe: Mortality_Axe, Mortality.Axe, Mortality Axe, Tempostorm Axe, Tempo-Axe, Tem
 Baka4Moe: Baka, B4M
 Bart: Entities From The Beyond Within Corpses Obsessed
 Bernal: Bernaldoe
+Beasty_Turtle3: Ang The Avatar, Beastly_Turtle3
 Bladewise: 62Bit Bladewise
-Bizzarro Flame: Bizarro Flame, Bizarroflame
+Bizzarro Flame: Bizarroflame, Bizaroflame, Bizzaroflame
+Lil' Snack: Billybopeep, BillyBoPeep, Billy, Lil'Snack
 Boback: Boback Vakili
 Cactuar: Cactaur
 Captain Faceroll: (Tmg) Captain Faceroll, Ix Captain Faceroll
@@ -19,7 +22,7 @@ Captain Smuckers: Smuckers
 Chillindude: Chillin, Chillindude829, Liquid' Chillindude, Liquid`Chillin
 Chu Dat: Chudat
 Coastward: Emg_Coastward
-Connorthekid: (Tmg) Connor, Connor
+Cdk: (Tmg) Connor, Connor, Connorthekid
 Coolkid: (Tmg) Coolkid
 Corkus: 4K.Corkus
 Dandy: Dandy?, Emp Dandy
@@ -31,6 +34,8 @@ Duck Chris: DuckChris
 Eddy Mexico: XTR Eddy Mexico, Eddymexico
 Eggz: Salazar Slitherin (Eggz)
 Eikelmannrus: Eikelmann, Eikelman
+Epic Murloc: Epicmurloc
+Eri: Erik, Eric
 Eval: Espr Eval
 Excel Zero: Excel_Zero, Excelzero
 Fatgoku: Fat Goku
@@ -40,6 +45,7 @@ Hax: VGBC Hax
 Hugs: Frq.Hugs
 Hungrybox: Liquid`Hungrybox, Crs. Hungrybox, CRS.Hungrybox, Liquid` Hungrybox, Liquid Hungrybox
 Idea: Emg_Idea, Emg Idea
+Ironpiggy: Iron Piggy
 J666: Oxy L J666
 Jeapie: Lll. Jeapie
 Jebailey: CEOJebailey
@@ -79,6 +85,8 @@ Reno: GK Reno
 Riddlebox: Kana Manami
 Ryan Ford: Unknown522
 Sacasumoto: (Tmg) Sacasumoto
+Satdaddy: Zack
+Santiago: ElFuego, El Fuego
 Sauc3: Emg Sauc3
 Sfat: Einstein Lover (Sfat)
 Sherigami: (Tmg) Sherigami, Sherigam
