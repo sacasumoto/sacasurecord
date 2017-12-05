@@ -2,6 +2,7 @@ import requests
 import scraping_functions as sf
 import pytz as pytz
 from datetime import datetime
+import parse
 """
 Copyright (c) 2015 Andrew Nestico
 
@@ -58,9 +59,15 @@ def get_tournament_info(slug):
         event_url = "https://api.smash.gg/tournament/" + slug + "/event/" + "tmt-top-8"
     else:
         event_url = "https://api.smash.gg/tournament/" + slug + "/event/" + "melee-singles"
-    e = requests.get(event_url, verify='cacert.pem')
-    event_data = e.json()
-    event_id = event_data["entities"]["event"]["id"]
+    try:
+        e = requests.get(event_url, verify='cacert.pem')
+        event_data = e.json()
+        event_id = event_data["entities"]["event"]["id"]
+    except:
+        event_url = "https://api.smash.gg/tournament/" + slug + "/event/" + "melee-singles"
+        e = requests.get(event_url, verify='cacert.pem')
+        event_data = e.json()
+        event_id = event_data["entities"]["event"]["id"]
 
     timestamp = event_data["entities"]["event"]["endAt"]
     if not timestamp:
@@ -75,11 +82,16 @@ def get_tournament_info(slug):
         a_data = requests.get(attendee_url, verify='cacert.pem').json()
         count = a_data["total_count"]
     else:
-        standing_string = "/standings?expand[]=attendee&per_page=100"
-        standing_url = event_url + standing_string
-        s = requests.get(standing_url,verify='cacert.pem')
-        s_data = s.json()
-        count = s_data["total_count"]
+        try:
+            standing_string = "/standings?expand[]=attendee&per_page=100"
+            standing_url = event_url + standing_string
+            s = requests.get(standing_url,verify='cacert.pem')
+            s_data = s.json()
+            count = s_data["total_count"]
+        except:
+            attendee_url = 'https://api.smash.gg/tournament/'+slug+'/attendees?filter=%7B"eventIds"%3A'+str(event_id)+'%7D'
+            a_data = requests.get(attendee_url, verify='cacert.pem').json()
+            count = a_data["total_count"]
     return([tournament_name,event_id,count,str(date)])
     
 def create_smashgg_api_urls(slug):
@@ -91,8 +103,14 @@ def create_smashgg_api_urls(slug):
         url = "https://api.smash.gg/tournament/" + slug + "/event/tmt-top-8?expand[0]=groups&expand[1]=phase"
     else:
         url = 'http://api.smash.gg/tournament/' + slug + '/event/melee-singles?expand[0]=groups&expand[1]=phase'
-    data = requests.get(url,verify='cacert.pem').json()
-    groups = data["entities"]["groups"]
+    try:
+        data = requests.get(url,verify='cacert.pem').json()
+        groups = data["entities"]["groups"]
+    except:
+        url = 'http://api.smash.gg/tournament/' + slug + '/event/melee-singles?expand[0]=groups&expand[1]=phase'
+        data = requests.get(url,verify='cacert.pem').json()
+        groups = data["entities"]["groups"]
+        
     urlList = []
     for i in range(len(groups)):
         iD = str(groups[i]["id"])
@@ -230,21 +248,54 @@ def getParticipantIDs(slug,key):
     data = requests.get(url,verify='cacert.pem').json()
     D = {}
     for entrant in data:
-        name = entrant['participant']['name']
-        entrant_id = entrant['participant']['id']
+        if entrant['participant']['name']:                 
+            name = entrant['participant']['name']
+        else:
+            name = entrant['participant']['username']
+        if entrant['participant']['id']:
+            entrant_id = entrant['participant']['id']
+        else:
+            entrant_id = entrant['participant']['group_player_ids']
         D[entrant_id] = name
     return(D)
     
 
 def getTournamentSets(slug,key):
     base_url = 'https://api.challonge.com/v1/tournaments/'
-    url = base_url+slug+'/matches.json?api_key='+key
+    url = base_url+slug+'/matches.json?api_key='+key+"&state=complete"
     data = requests.get(url, verify='cacert.pem').json()
     nameIDDict = getParticipantIDs(slug,key)
     setTuple = []
+    nonDQs = []
     for match in data:
+        m = match['match']
+        setStringsList = m['scores_csv'].split(',')
+        s1T = 0
+        s2T = 0
+        for matchCount in setStringsList:
+            s1,s2 = parse.parse("{:d}-{:d}", matchCount)
+            s1T += s1
+            s2T += s2
+        if s1T == -1 or s2T == -1:
+            continue
+        else:
+            nonDQs.append(match)
+            
+##        try:
+##            s1,s2 = parse.parse("{:d}-{:d}", setCount)
+##            if s1 < 0 or s2 < 0:
+##                continue
+##            else:
+##                nonDQs.append(match)
+##        except Exception as e:
+##            continue
+####            print('Invalid Set')
+    
+    for match in nonDQs:        
         p1ID = match["match"]["winner_id"]
         p2ID = match["match"]["loser_id"]
+##        print(p1ID,p2ID)
+##        print(sf.normalize_name(nameIDDict[p1ID]), sf.normalize_name(nameIDDict[p2ID]))
         p1 = sf.normalize_name(nameIDDict[p1ID])
         p2 = sf.normalize_name(nameIDDict[p2ID])
         setTuple.append([p1,p2])
@@ -476,7 +527,14 @@ class MasterTournament:
         return(D)
         
 
-
+    def getPlayerTotalSets(self,player):
+        count = 0
+        D = self.getPlayerWinsLossDict(player)
+        for opponent in D:
+            W,L = D[opponent]
+            count += W
+            count += L
+        return(count)
      
     def getPlayerWinsLoss(self,player):
         print('Wins:{}\nLosses:{}'.format(self.getPlayerWins(player),self.getPlayerLoss(player)))
@@ -497,6 +555,7 @@ class MasterTournament:
         L = file.readlines()
         for tournamentDict in L:
             self.addTournament('Loading',**eval(tournamentDict))
+        print("Done")
         return(self.tournamentsAdded())
 
     def addFromUrlFile(self,filename,encoding='utf-8'):
@@ -520,4 +579,9 @@ class MasterTournament:
         print('Done')
     def clearAll(self):
         self.tournamentList = []
+
+##if '__name__' != '__init__':
+##    M = MasterTournament([])
+##    M.loadFromFile('LoadIn.txt')
+##    M.normalizeNamesAgain()
 
