@@ -1,4 +1,4 @@
-# SacaSuRecord ver 0.06
+# SacaSuRecord ver 0.07
 ## Description
 * Smash.gg parser 
 * Challonge parser
